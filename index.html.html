@@ -1,0 +1,512 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Heart + Universe</title>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(circle at 50% 25%, #1a0026 0%, #000010 45%, #000 100%);
+        }
+        /* Ánh sáng vũ trụ phía xa */
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(120, 0, 140, 0.3) 0%, transparent 60%), radial-gradient(circle at 80% 20%, rgba(0, 128, 255, 0.25) 0%, transparent 65%);
+            filter: blur(80px);
+            z-index: 0;
+        }
+        
+        canvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            left: 0;
+            top: 0;
+        }
+        
+        #fireworks {
+            z-index: 1;
+        }
+        
+        #snow {
+            z-index: 2;
+        }
+        
+        #twinkle {
+            z-index: 3;
+        }
+        /* ⭐Mới */
+        
+        #shootingstars {
+            z-index: 4;
+        }
+        
+        #pinkboard {
+            z-index: 5;
+        }
+        
+        #textLove {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #3490da;
+            font-size: 50px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            text-shadow: 0 0 15px #ff4da6, 0 0 25px #ff99cc;
+            animation: pulse 1.5s infinite alternate ease-in-out;
+            pointer-events: none;
+            z-index: 6;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: .8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.25);
+                opacity: 1;
+            }
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(100, 255, 255, 0.08);
+            border: 1.5px solid rgba(100, 255, 255, 0.45);
+            box-shadow: 0 0 10px rgba(100, 255, 255, 0.3) inset;
+            backdrop-filter: blur(1.5px);
+            pointer-events: none;
+            z-index: 3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="pinkboard"></canvas>
+    <canvas id="fireworks"></canvas>
+    <canvas id="snow"></canvas>
+    <canvas id="twinkle"></canvas>
+    <canvas id="shootingstars"></canvas>
+    <div id="textLove">Minh Thuận </div>
+
+    <!-- ❤️ GIỮ NGUYÊN CODE TRÁI TIM (Không chỉnh sửa) -->
+    <script>
+        var settings = {
+            particles: {
+                length: 500,
+                duration: 2,
+                velocity: 100,
+                effect: -.75,
+                size: 30
+            }
+        };
+        (function() {
+            var b = 0;
+            var c = ["ms", "moz", "webkit", "o"];
+            for (var a = 0; a < c.length && !window.requestAnimationFrame; ++a) {
+                window.requestAnimationFrame = window[c[a] + "RequestAnimationFrame"];
+                window.cancelAnimationFrame = window[c[a] + "CancelAnimationFrame"] || window[c[a] + "CancelRequestAnimationFrame"]
+            }
+            if (!window.requestAnimationFrame) {
+                window.requestAnimationFrame = function(h, e) {
+                    var d = new Date().getTime();
+                    var f = Math.max(0, 16 - (d - b));
+                    var g = window.setTimeout(function() {
+                        h(d + f)
+                    }, f);
+                    b = d + f;
+                    return g
+                }
+            }
+            if (!window.cancelAnimationFrame) {
+                window.cancelAnimationFrame = function(d) {
+                    clearTimeout(d)
+                }
+            }
+        })();
+        var Point = function(x, y) {
+            this.x = x || 0;
+            this.y = y || 0
+        };
+        Point.prototype.clone = function() {
+            return new Point(this.x, this.y)
+        };
+        Point.prototype.length = function(l) {
+            if (l === undefined) return Math.sqrt(this.x * this.x + this.y * this.y);
+            this.normalize();
+            this.x *= l;
+            this.y *= l;
+            return this
+        };
+        Point.prototype.normalize = function() {
+            var l = this.length();
+            this.x /= l;
+            this.y /= l;
+            return this
+        };
+        var Particle = function() {
+            this.position = new Point();
+            this.velocity = new Point();
+            this.acceleration = new Point();
+            this.age = 0
+        };
+        Particle.prototype.initialize = function(x, y, dx, dy) {
+            this.position.x = x;
+            this.position.y = y;
+            this.velocity.x = dx;
+            this.velocity.y = dy;
+            this.acceleration.x = dx * settings.particles.effect;
+            this.acceleration.y = dy * settings.particles.effect;
+            this.age = 0
+        };
+        Particle.prototype.update = function(dt) {
+            this.position.x += this.velocity.x * dt;
+            this.position.y += this.velocity.y * dt;
+            this.velocity.x += this.acceleration.x * dt;
+            this.velocity.y += this.acceleration.y * dt;
+            this.age += dt
+        };
+        Particle.prototype.draw = function(c, img) {
+            var t = this.age / settings.particles.duration;
+            var s = img.width * ((--t) * t * t + 1);
+            c.globalAlpha = 1 - this.age / settings.particles.duration;
+            c.drawImage(img, this.position.x - s / 2, this.position.y - s / 2, s, s)
+        };
+        var ParticlePool = function(l) {
+            var a = new Array(l);
+            for (var i = 0; i < l; i++) a[i] = new Particle();
+            var g = 0,
+                d = 0,
+                f = settings.particles.duration;
+            this.add = function(x, y, dx, dy) {
+                a[d].initialize(x, y, dx, dy);
+                d++;
+                if (d == l) d = 0;
+                if (g == d) g++;
+                if (g == l) g = 0
+            };
+            this.update = function(dt) {
+                var i;
+                if (g < d) {
+                    for (i = g; i < d; i++) a[i].update(dt)
+                }
+                if (d < g) {
+                    for (i = g; i < l; i++) a[i].update(dt);
+                    for (i = 0; i < d; i++) a[i].update(dt)
+                }
+                while (a[g].age >= f && g != d) {
+                    g++;
+                    if (g == l) g = 0
+                }
+            };
+            this.draw = function(c, img) {
+                var i;
+                if (g < d) {
+                    for (i = g; i < d; i++) a[i].draw(c, img)
+                }
+                if (d < g) {
+                    for (i = g; i < l; i++) a[i].draw(c, img);
+                    for (i = 0; i < d; i++) a[i].draw(c, img)
+                }
+            }
+        };
+        (function(canvas) {
+            var ctx = canvas.getContext("2d"),
+                pool = new ParticlePool(settings.particles.length),
+                rate = settings.particles.length / settings.particles.duration,
+                time;
+
+            function heart(t) {
+                return new Point(160 * Math.sin(t) ** 3, 130 * Math.cos(t) - 50 * Math.cos(2 * t) - 20 * Math.cos(3 * t) - 10 * Math.cos(4 * t) + 25)
+            }
+            var img = (function() {
+                var c = document.createElement("canvas"),
+                    x = c.getContext("2d");
+                c.width = settings.particles.size;
+                c.height = settings.particles.size;
+
+                function to(t) {
+                    var p = heart(t);
+                    p.x = c.width / 2 + p.x * c.width / 350;
+                    p.y = c.height / 2 - p.y * c.height / 350;
+                    return p
+                }
+                x.beginPath();
+                var t = -Math.PI,
+                    p = to(t);
+                x.moveTo(p.x, p.y);
+                while (t < Math.PI) {
+                    t += .01;
+                    p = to(t);
+                    x.lineTo(p.x, p.y)
+                }
+                x.closePath();
+                x.fillStyle = "#ea80b0";
+                x.fill();
+                var i = new Image();
+                i.src = c.toDataURL();
+                return i
+            })();
+
+            function render() {
+                requestAnimationFrame(render);
+                var newTime = new Date().getTime() / 1000,
+                    dt = newTime - (time || newTime);
+                time = newTime;
+                if (canvas.width !== canvas.clientWidth) canvas.width = canvas.clientWidth;
+                if (canvas.height !== canvas.clientHeight) canvas.height = canvas.clientHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                var amount = rate * dt;
+                for (var i = 0; i < amount; i++) {
+                    var pos = heart(Math.PI - 2 * Math.PI * Math.random());
+                    var dir = pos.clone().length(settings.particles.velocity);
+                    pool.add(canvas.width / 2 + pos.x, canvas.height / 2 - pos.y, dir.x, -dir.y)
+                }
+                pool.update(dt);
+                pool.draw(ctx, img)
+            }
+
+            function resize() {
+                canvas.width = canvas.clientWidth;
+                canvas.height = canvas.clientHeight
+            }
+            window.addEventListener("resize", resize);
+            setTimeout(function() {
+                resize();
+                render()
+            }, 10)
+        })(document.getElementById("pinkboard"));
+    </script>
+
+    <!-- FIREWORKS -->
+    <script>
+        const fw = document.getElementById("fireworks"),
+            ctxFw = fw.getContext("2d");
+        let particlesFw = [];
+
+        function resizeFW() {
+            fw.width = innerWidth;
+            fw.height = innerHeight
+        }
+        resizeFW();
+        addEventListener('resize', resizeFW);
+
+        function createFirework(x, y) {
+            let color = "hsl(" + Math.random() * 360 + ",100%,60%)";
+            for (let i = 0; i < 50; i++) {
+                let a = Math.random() * 2 * Math.PI,
+                    s = Math.random() * 4 + 3;
+                particlesFw.push({
+                    x,
+                    y,
+                    vx: Math.cos(a) * s,
+                    vy: Math.sin(a) * s,
+                    alpha: 1,
+                    size: Math.random() * 4 + 3,
+                    color
+                })
+            }
+        }
+
+        function loopFW() {
+            ctxFw.clearRect(0, 0, fw.width, fw.height);
+            particlesFw.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += .02;
+                p.alpha -= .015;
+                ctxFw.globalAlpha = p.alpha;
+                ctxFw.fillStyle = p.color;
+                ctxFw.beginPath();
+                ctxFw.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+                ctxFw.fill()
+            });
+            particlesFw = particlesFw.filter(p => p.alpha > 0);
+            requestAnimationFrame(loopFW)
+        }
+        setInterval(() => {
+            createFirework(140, innerHeight - 250);
+            createFirework(innerWidth - 140, innerHeight - 250)
+        }, 900);
+        loopFW();
+    </script>
+
+    <!-- SNOW -->
+    <script>
+        const sn = document.getElementById("snow"),
+            ctxSn = sn.getContext("2d");
+        let arrSnow = [];
+
+        function reSN() {
+            sn.width = innerWidth;
+            sn.height = innerHeight
+        }
+        reSN();
+        addEventListener('resize', reSN);
+
+        function addSnow() {
+            arrSnow.push({
+                x: Math.random() * sn.width,
+                y: -10,
+                s: Math.random() * 1.5 + 1,
+                c: ["❄", "✻", "✼", "✥"][Math.floor(Math.random() * 4)],
+                z: Math.random() * 16 + 10
+            })
+        }
+
+        function loopSnow() {
+            ctxSn.clearRect(0, 0, sn.width, sn.height);
+            ctxSn.fillStyle = "#fff";
+            arrSnow.forEach(s => {
+                ctxSn.font = s.z + "px Arial";
+                s.y += s.s;
+                ctxSn.fillText(s.c, s.x, s.y)
+            });
+            arrSnow = arrSnow.filter(s => s.y < sn.height + 30);
+            requestAnimationFrame(loopSnow)
+        }
+        setInterval(addSnow, 90);
+        loopSnow();
+    </script>
+
+    <!-- TWINKLE STARS -->
+    <script>
+        const tw = document.getElementById("twinkle");
+        const ctxTw = tw.getContext("2d");
+
+        function reTw() {
+            tw.width = innerWidth;
+            tw.height = innerHeight;
+        }
+        reTw();
+        addEventListener("resize", reTw);
+        let starsTw = [];
+        for (let i = 0; i < 130; i++) {
+            starsTw.push({
+                x: Math.random() * tw.width,
+                y: Math.random() * tw.height * 0.8,
+                r: Math.random() * 1.6 + 0.4,
+                a: Math.random() * 1,
+                s: Math.random() * 0.02 + 0.005
+            });
+        }
+
+        function animTw() {
+            ctxTw.clearRect(0, 0, tw.width, tw.height);
+            starsTw.forEach(s => {
+                s.a += s.s;
+                const o = 0.3 + Math.abs(Math.sin(s.a)) * 0.7;
+                ctxTw.beginPath();
+                ctxTw.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+                ctxTw.fillStyle = `rgba(255,255,255,${o})`;
+                ctxTw.fill();
+            });
+            requestAnimationFrame(animTw);
+        }
+        animTw();
+    </script>
+
+    <!-- SHOOTING STARS -->
+    <script>
+        const st = document.getElementById("shootingstars"),
+            ctxSt = st.getContext("2d");
+
+        function reST() {
+            st.width = innerWidth;
+            st.height = innerHeight
+        }
+        reST();
+        addEventListener("resize", reST);
+
+        function randomColor() {
+            return `hsl(${Math.random()*360}, 100%, 70%)`;
+        }
+        class Star {
+            constructor() {
+                this.reset()
+            }
+            reset() {
+                this.x = Math.random() * st.width;
+                this.y = Math.random() * st.height * 0.45;
+                this.len = Math.random() * 140 + 50;
+                this.sp = Math.random() * 10 + 8;
+                this.a = Math.random() * Math.PI;
+                this.o = Math.random() * 0.9 + 0.4;
+                this.w = Math.random() * 4 + 1.5;
+                this.color = randomColor();
+            }
+            update() {
+                this.x += Math.cos(this.a) * this.sp;
+                this.y += Math.sin(this.a) * this.sp;
+                if (this.x > st.width || this.y > st.height || this.x < 0 || this.y < 0) this.reset();
+            }
+            draw() {
+                const ex = this.x - Math.cos(this.a) * this.len;
+                const ey = this.y - Math.sin(this.a) * this.len;
+                const g = ctxSt.createLinearGradient(this.x, this.y, ex, ey);
+                g.addColorStop(0, this.color);
+                g.addColorStop(1, "rgba(255,255,255,0)");
+                ctxSt.beginPath();
+                ctxSt.strokeStyle = g;
+                ctxSt.lineWidth = this.w;
+                ctxSt.moveTo(this.x, this.y);
+                ctxSt.lineTo(ex, ey);
+                ctxSt.stroke();
+            }
+        }
+        let stars = [];
+        for (let i = 0; i < 15; i++) stars.push(new Star());
+        (function anim() {
+            ctxSt.clearRect(0, 0, st.width, st.height);
+            stars.forEach(s => {
+                s.update();
+                s.draw()
+            });
+            requestAnimationFrame(anim);
+        })();
+    </script>
+
+    <!-- BUBBLES -->
+    <script>
+        function bubble() {
+            const b = document.createElement("div");
+            b.className = "bubble";
+            const size = 8 + Math.random() * 32;
+            b.style.width = size + "px";
+            b.style.height = size + "px";
+            b.style.left = Math.random() * (innerWidth - size) + "px";
+            b.style.bottom = "-40px";
+            const up = 200 + Math.random() * 500,
+                side = (Math.random() * 150) - 75;
+            b.animate([{
+                transform: "translate(0,0)",
+                opacity: .9
+            }, {
+                transform: `translate(${side}px,-${up}px)`,
+                opacity: 0
+            }], {
+                duration: 3500 + Math.random() * 2500,
+                easing: "ease-out"
+            });
+            document.body.appendChild(b);
+            setTimeout(() => b.remove(), 6000);
+        }
+        setInterval(bubble, 280);
+    </script>
+</body>
+
+</html>
