@@ -32,23 +32,13 @@
             height: 100%;
             left: 0;
             top: 0;
+            will-change: transform;
+            /* Ép GPU tăng tốc phần cứng */
         }
         
-        #fireworks {
+        #universe {
             z-index: 1;
-        }
-        
-        #snow {
-            z-index: 2;
-        }
-        
-        #twinkle {
-            z-index: 3;
-        }
-        /* ⭐Mới */
-        
-        #shootingstars {
-            z-index: 4;
+            /* Chứa pháo hoa, tuyết, sao lấp lánh, sao băng */
         }
         
         #pinkboard {
@@ -68,6 +58,7 @@
             animation: pulse 1.5s infinite alternate ease-in-out;
             pointer-events: none;
             z-index: 6;
+            will-change: transform, opacity;
         }
         
         @keyframes pulse {
@@ -90,20 +81,17 @@
             backdrop-filter: blur(1.5px);
             pointer-events: none;
             z-index: 3;
+            will-change: transform, opacity;
         }
     </style>
 </head>
 
 <body>
 
+    <canvas id="universe"></canvas>
     <canvas id="pinkboard"></canvas>
-    <canvas id="fireworks"></canvas>
-    <canvas id="snow"></canvas>
-    <canvas id="twinkle"></canvas>
-    <canvas id="shootingstars"></canvas>
-    <div id="textLove">Minh Thuận </div>
+    <div id="textLove">Minh Thuận</div>
 
-    <!-- ❤️ GIỮ NGUYÊN CODE TRÁI TIM (Không chỉnh sửa) -->
     <script>
         var settings = {
             particles: {
@@ -292,18 +280,20 @@
         })(document.getElementById("pinkboard"));
     </script>
 
-    <!-- FIREWORKS -->
     <script>
-        const fw = document.getElementById("fireworks"),
-            ctxFw = fw.getContext("2d");
-        let particlesFw = [];
+        const uv = document.getElementById("universe"),
+            ctx = uv.getContext("2d");
 
-        function resizeFW() {
-            fw.width = innerWidth;
-            fw.height = innerHeight
+        function resizeUV() {
+            uv.width = window.innerWidth;
+            uv.height = window.innerHeight;
         }
-        resizeFW();
-        addEventListener('resize', resizeFW);
+        resizeUV();
+        window.addEventListener('resize', resizeUV);
+
+        // --- KHỞI TẠO BIẾN CHO CÁC HIỆU ỨNG ---
+        // 1. Pháo hoa (Fireworks)
+        let particlesFw = [];
 
         function createFirework(x, y) {
             let color = "hsl(" + Math.random() * 360 + ",100%,60%)";
@@ -318,130 +308,53 @@
                     alpha: 1,
                     size: Math.random() * 4 + 3,
                     color
-                })
+                });
             }
         }
-
-        function loopFW() {
-            ctxFw.clearRect(0, 0, fw.width, fw.height);
-            particlesFw.forEach(p => {
-                p.x += p.vx;
-                p.y += p.vy;
-                p.vy += .02;
-                p.alpha -= .015;
-                ctxFw.globalAlpha = p.alpha;
-                ctxFw.fillStyle = p.color;
-                ctxFw.beginPath();
-                ctxFw.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
-                ctxFw.fill()
-            });
-            particlesFw = particlesFw.filter(p => p.alpha > 0);
-            requestAnimationFrame(loopFW)
-        }
         setInterval(() => {
-            createFirework(140, innerHeight - 250);
-            createFirework(innerWidth - 140, innerHeight - 250)
+            createFirework(140, window.innerHeight - 250);
+            createFirework(window.innerWidth - 140, window.innerHeight - 250);
         }, 900);
-        loopFW();
-    </script>
 
-    <!-- SNOW -->
-    <script>
-        const sn = document.getElementById("snow"),
-            ctxSn = sn.getContext("2d");
+        // 2. Tuyết (Snow)
         let arrSnow = [];
 
-        function reSN() {
-            sn.width = innerWidth;
-            sn.height = innerHeight
-        }
-        reSN();
-        addEventListener('resize', reSN);
-
         function addSnow() {
-            arrSnow.push({
-                x: Math.random() * sn.width,
-                y: -10,
-                s: Math.random() * 1.5 + 1,
-                c: ["❄", "✻", "✼", "✥"][Math.floor(Math.random() * 4)],
-                z: Math.random() * 16 + 10
-            })
-        }
-
-        function loopSnow() {
-            ctxSn.clearRect(0, 0, sn.width, sn.height);
-            ctxSn.fillStyle = "#fff";
-            arrSnow.forEach(s => {
-                ctxSn.font = s.z + "px Arial";
-                s.y += s.s;
-                ctxSn.fillText(s.c, s.x, s.y)
-            });
-            arrSnow = arrSnow.filter(s => s.y < sn.height + 30);
-            requestAnimationFrame(loopSnow)
+            if (arrSnow.length < 100) { // Giới hạn số tuyết trên màn hình để đỡ lag
+                arrSnow.push({
+                    x: Math.random() * uv.width,
+                    y: -10,
+                    s: Math.random() * 1.5 + 1,
+                    c: ["❄", "✻", "✼", "✥"][Math.floor(Math.random() * 4)],
+                    z: Math.random() * 16 + 10
+                });
+            }
         }
         setInterval(addSnow, 90);
-        loopSnow();
-    </script>
 
-    <!-- TWINKLE STARS -->
-    <script>
-        const tw = document.getElementById("twinkle");
-        const ctxTw = tw.getContext("2d");
-
-        function reTw() {
-            tw.width = innerWidth;
-            tw.height = innerHeight;
-        }
-        reTw();
-        addEventListener("resize", reTw);
+        // 3. Sao lấp lánh (Twinkle Stars)
         let starsTw = [];
         for (let i = 0; i < 130; i++) {
             starsTw.push({
-                x: Math.random() * tw.width,
-                y: Math.random() * tw.height * 0.8,
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight * 0.8,
                 r: Math.random() * 1.6 + 0.4,
                 a: Math.random() * 1,
                 s: Math.random() * 0.02 + 0.005
             });
         }
 
-        function animTw() {
-            ctxTw.clearRect(0, 0, tw.width, tw.height);
-            starsTw.forEach(s => {
-                s.a += s.s;
-                const o = 0.3 + Math.abs(Math.sin(s.a)) * 0.7;
-                ctxTw.beginPath();
-                ctxTw.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
-                ctxTw.fillStyle = `rgba(255,255,255,${o})`;
-                ctxTw.fill();
-            });
-            requestAnimationFrame(animTw);
-        }
-        animTw();
-    </script>
-
-    <!-- SHOOTING STARS -->
-    <script>
-        const st = document.getElementById("shootingstars"),
-            ctxSt = st.getContext("2d");
-
-        function reST() {
-            st.width = innerWidth;
-            st.height = innerHeight
-        }
-        reST();
-        addEventListener("resize", reST);
-
+        // 4. Sao băng (Shooting Stars)
         function randomColor() {
             return `hsl(${Math.random()*360}, 100%, 70%)`;
         }
         class Star {
             constructor() {
-                this.reset()
+                this.reset();
             }
             reset() {
-                this.x = Math.random() * st.width;
-                this.y = Math.random() * st.height * 0.45;
+                this.x = Math.random() * uv.width;
+                this.y = Math.random() * uv.height * 0.45;
                 this.len = Math.random() * 140 + 50;
                 this.sp = Math.random() * 10 + 8;
                 this.a = Math.random() * Math.PI;
@@ -452,46 +365,95 @@
             update() {
                 this.x += Math.cos(this.a) * this.sp;
                 this.y += Math.sin(this.a) * this.sp;
-                if (this.x > st.width || this.y > st.height || this.x < 0 || this.y < 0) this.reset();
+                if (this.x > uv.width || this.y > uv.height || this.x < 0 || this.y < 0) this.reset();
             }
             draw() {
                 const ex = this.x - Math.cos(this.a) * this.len;
                 const ey = this.y - Math.sin(this.a) * this.len;
-                const g = ctxSt.createLinearGradient(this.x, this.y, ex, ey);
+                const g = ctx.createLinearGradient(this.x, this.y, ex, ey);
                 g.addColorStop(0, this.color);
                 g.addColorStop(1, "rgba(255,255,255,0)");
-                ctxSt.beginPath();
-                ctxSt.strokeStyle = g;
-                ctxSt.lineWidth = this.w;
-                ctxSt.moveTo(this.x, this.y);
-                ctxSt.lineTo(ex, ey);
-                ctxSt.stroke();
+                ctx.beginPath();
+                ctx.strokeStyle = g;
+                ctx.lineWidth = this.w;
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(ex, ey);
+                ctx.stroke();
             }
         }
         let stars = [];
         for (let i = 0; i < 15; i++) stars.push(new Star());
-        (function anim() {
-            ctxSt.clearRect(0, 0, st.width, st.height);
+
+
+        // 🔄 VÒNG LẶP UNIVERSE DUY NHẤT (Vẽ toàn bộ hiệu ứng nền)
+        function loopUniverse() {
+            ctx.clearRect(0, 0, uv.width, uv.height);
+
+            // Vẽ Sao lấp lánh trước (Dưới cùng)
+            starsTw.forEach(s => {
+                s.a += s.s;
+                const o = 0.3 + Math.abs(Math.sin(s.a)) * 0.7;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, 2 * Math.PI);
+                ctx.fillStyle = `rgba(255,255,255,${o})`;
+                ctx.fill();
+            });
+
+            // Vẽ Sao băng
             stars.forEach(s => {
                 s.update();
-                s.draw()
+                s.draw();
             });
-            requestAnimationFrame(anim);
-        })();
+
+            // Vẽ Tuyết rơi
+            ctx.fillStyle = "#fff";
+            arrSnow.forEach(s => {
+                ctx.font = s.z + "px Arial";
+                s.y += s.s;
+                ctx.fillText(s.c, s.x, s.y);
+            });
+            arrSnow = arrSnow.filter(s => s.y < uv.height + 30);
+
+            // Vẽ Pháo hoa (Trên cùng vũ trụ)
+            particlesFw.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += .02;
+                p.alpha -= .015;
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0; // Reset alpha sau khi vẽ pháo hoa
+            particlesFw = particlesFw.filter(p => p.alpha > 0);
+
+            requestAnimationFrame(loopUniverse);
+        }
+        loopUniverse();
     </script>
 
-    <!-- BUBBLES -->
     <script>
+        let currentBubbles = 0;
+        const maxBubbles = 25; // Giới hạn số bong bóng xuất hiện đồng thời để tránh quá tải DOM
+
         function bubble() {
+            if (currentBubbles >= maxBubbles) return;
+
             const b = document.createElement("div");
             b.className = "bubble";
             const size = 8 + Math.random() * 32;
             b.style.width = size + "px";
             b.style.height = size + "px";
-            b.style.left = Math.random() * (innerWidth - size) + "px";
+            b.style.left = Math.random() * (window.innerWidth - size) + "px";
             b.style.bottom = "-40px";
+
             const up = 200 + Math.random() * 500,
                 side = (Math.random() * 150) - 75;
+
+            currentBubbles++;
+
             b.animate([{
                 transform: "translate(0,0)",
                 opacity: .9
@@ -502,10 +464,15 @@
                 duration: 3500 + Math.random() * 2500,
                 easing: "ease-out"
             });
+
             document.body.appendChild(b);
-            setTimeout(() => b.remove(), 6000);
+
+            setTimeout(() => {
+                b.remove();
+                currentBubbles--;
+            }, 6000);
         }
-        setInterval(bubble, 280);
+        setInterval(bubble, 350);
     </script>
 </body>
 
